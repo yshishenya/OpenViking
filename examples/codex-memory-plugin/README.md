@@ -108,11 +108,38 @@ Optional Codex-specific tuning lives under `codex` in `ovcli.conf`:
   "codex": {
     "agentId": "codex",
     "recallLimit": 6,
+    "scoreThreshold": 0.35,
+    "minInjectScore": 0.55,
+    "minBaseInjectScore": 0.55,
+    "fullContentScore": 0.65,
+    "recallMaxMemoryChars": 1200,
     "captureAssistantTurns": false,
     "autoCommitOnCompact": true
   }
 }
 ```
+
+Auto-recall is intentionally conservative: if the best result is not
+confident enough, the hook emits `{}` and Codex receives no injected memory
+for that turn. This is the expected behavior for vague prompts such as
+"look into what happened" or diagnostic prompts about the memory plugin
+itself. The recall gate is controlled by:
+
+| Setting | Env var | Default | Purpose |
+|---|---|---:|---|
+| `recallLimit` | `OPENVIKING_RECALL_LIMIT` | `6` | Maximum candidate memories to inject after filtering. |
+| `scoreThreshold` | `OPENVIKING_SCORE_THRESHOLD` | `0.35` | Minimum raw retrieval score before local ranking. |
+| `minInjectScore` | `OPENVIKING_MIN_INJECT_SCORE` | `0.55` | Minimum final local ranking score for injection. |
+| `minBaseInjectScore` | `OPENVIKING_MIN_BASE_INJECT_SCORE` | `0.55` | Minimum raw retrieval score; ranking boosts cannot bypass this. |
+| `fullContentScore` | `OPENVIKING_FULL_CONTENT_SCORE` | `0.65` | Read full memory content only for high-confidence hits. |
+| `recallMaxMemoryChars` | `OPENVIKING_RECALL_MAX_MEMORY_CHARS` | `1200` | Per-memory injected character cap. |
+
+Captured turns are sanitized before they are appended to the OpenViking
+session. The sanitizer strips Codex/OpenClaw runtime blocks such as
+`<relevant-memories>`, `Conversation context (untrusted metadata)`,
+subagent prompts, inter-session messages, and internal OpenClaw context
+envelopes. This prevents hook-generated context from becoming future
+long-term memory.
 
 ## Architecture
 
@@ -170,13 +197,18 @@ On any /commit failure (OV unreachable, non-2xx, timeout) we **preserve state** 
 
 ### Auto-recall (every UserPromptSubmit)
 
-`auto-recall.mjs` reads `prompt` from stdin, calls `/api/v1/search/find`, ranks results, reads full content for top-ranked leaves, and emits:
+`auto-recall.mjs` reads `prompt` from stdin, calls `/api/v1/search/find`,
+ranks results, applies the conservative injection gates above, reads full
+content only for high-confidence leaves, and emits:
 
 ```json
 { "hookSpecificOutput": { "hookEventName": "UserPromptSubmit", "additionalContext": "<relevant-memories>...</relevant-memories>" } }
 ```
 
 Codex injects `additionalContext` into the model turn, so memories arrive without an extra tool call.
+
+If no result survives the confidence gate, the script emits `{}`. That is a
+successful no-op, not an error.
 
 ### Stop (turn end → `add_message`, NOT `commit`)
 
