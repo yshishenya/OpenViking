@@ -346,20 +346,29 @@ class AgentLoop:
                         try:
                             # Build query from last 3 user messages
                             _user_msgs = [
-                                m["content"] for m in messages
+                                m["content"]
+                                for m in messages
                                 if m.get("role") == "user" and isinstance(m.get("content"), str)
                             ]
                             _query = "\n".join(_user_msgs[-3:])
-                            workspace_id = self.sandbox_manager.to_workspace_id(session_key) if self.sandbox_manager else "shared"
+                            workspace_id = (
+                                self.sandbox_manager.to_workspace_id(session_key)
+                                if self.sandbox_manager
+                                else "shared"
+                            )
                             _exp = await self.context.memory.get_viking_experience_context(
                                 query=_query, workspace_id=workspace_id
                             )
-                            logger.info(f"[WRITE_EXP]: write tool detected, exp_found={bool(_exp)}, query={_query[:50]}")
+                            logger.info(
+                                f"[WRITE_EXP]: write tool detected, exp_found={bool(_exp)}, query={_query[:50]}"
+                            )
                             if _exp:
-                                messages.append({
-                                    "role": "user",
-                                    "content": f"## Relevant Agent Experience\n{_exp}",
-                                })
+                                messages.append(
+                                    {
+                                        "role": "user",
+                                        "content": f"## Relevant Agent Experience\n{_exp}",
+                                    }
+                                )
                                 continue
                         except Exception as _e:
                             logger.warning(f"[WRITE_EXP]: failed to load experience: {_e}")

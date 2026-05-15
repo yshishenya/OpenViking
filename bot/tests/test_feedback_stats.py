@@ -160,9 +160,7 @@ def test_compute_feedback_stats_supports_filters(temp_dir):
                             "feedback_events": [
                                 {"response_id": "resp-1", "feedback_type": "thumb_up"}
                             ],
-                            "response_outcomes": {
-                                "resp-1": {"outcome_label": "positive_feedback"}
-                            },
+                            "response_outcomes": {"resp-1": {"outcome_label": "positive_feedback"}},
                         },
                     }
                 ),
@@ -192,9 +190,7 @@ def test_compute_feedback_stats_supports_filters(temp_dir):
                             "feedback_events": [
                                 {"response_id": "resp-2", "feedback_type": "thumb_down"}
                             ],
-                            "response_outcomes": {
-                                "resp-2": {"outcome_label": "negative_feedback"}
-                            },
+                            "response_outcomes": {"resp-2": {"outcome_label": "negative_feedback"}},
                         },
                     }
                 ),
@@ -575,7 +571,9 @@ def test_build_feedback_stats_display_applies_filters_and_sorting(temp_dir):
     assert "cli__default__session-1" not in display["sessions_markdown"]
 
 
-def test_compute_feedback_stats_preserves_all_assistant_responses_total_but_uses_tracked_denominators(temp_dir):
+def test_compute_feedback_stats_preserves_all_assistant_responses_total_but_uses_tracked_denominators(
+    temp_dir,
+):
     sessions_dir = temp_dir / "bot" / "sessions"
     sessions_dir.mkdir(parents=True)
 
@@ -591,9 +589,7 @@ def test_compute_feedback_stats_preserves_all_assistant_responses_total_but_uses
                             "feedback_events": [
                                 {"response_id": "resp-1", "feedback_type": "thumb_up"}
                             ],
-                            "response_outcomes": {
-                                "resp-1": {"outcome_label": "positive_feedback"}
-                            },
+                            "response_outcomes": {"resp-1": {"outcome_label": "positive_feedback"}},
                         },
                     }
                 ),

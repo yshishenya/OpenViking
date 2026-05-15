@@ -135,9 +135,7 @@ def test_feedback_collector_reuses_last_values_with_valid_zero_on_failure(
                             "feedback_events": [
                                 {"response_id": "resp-1", "feedback_type": "thumb_up"}
                             ],
-                            "response_outcomes": {
-                                "resp-1": {"outcome_label": "positive_feedback"}
-                            },
+                            "response_outcomes": {"resp-1": {"outcome_label": "positive_feedback"}},
                         },
                     }
                 ),
